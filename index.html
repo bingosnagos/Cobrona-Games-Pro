@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt">
-
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Snake Pro</title>
+<title>Cobrona Games Pro</title>
 
 <style>
 
@@ -21,20 +20,16 @@ justify-content:center;
 height:100vh;
 font-family:Arial;
 color:white;
-overflow:hidden;
 }
 
 h1{
-color:#38bdf8;
-margin:10px;
+color:#22c55e;
 }
 
 canvas{
 background:#020617;
-border:4px solid #38bdf8;
-box-shadow:0 0 20px #38bdf8;
-max-width:95vw;
-max-height:80vh;
+border:4px solid #22c55e;
+box-shadow:0 0 25px #22c55e;
 }
 
 </style>
@@ -43,53 +38,134 @@ max-height:80vh;
 
 <body>
 
-<h1>🐍 Cobrona</h1>
+<h1>🐍 Cobrona Games Pro</h1>
 
-<canvas id="game"></canvas>
+<canvas id="game" width="600" height="600"></canvas>
 
 <script>
 
 const canvas = document.getElementById("game")
 const ctx = canvas.getContext("2d")
 
-let size = Math.min(window.innerWidth, window.innerHeight)*0.9
-canvas.width = size
-canvas.height = size
-
 const grid = 20
 let count = 0
 let score = 0
-let gameOver = false
 
 let snake = {
-x:200,
-y:200,
+x:300,
+y:300,
 dx:grid,
 dy:0,
 cells:[],
-maxCells:4
+maxCells:6
 }
 
 let apple = {
-x:160,
-y:160
+x:200,
+y:200
 }
 
 function random(min,max){
 return Math.floor(Math.random()*(max-min))+min
 }
 
-function drawScore(){
+function drawApple(){
+
+ctx.beginPath()
+ctx.fillStyle="red"
+
+ctx.arc(
+apple.x + grid/2,
+apple.y + grid/2,
+grid/2.3,
+0,
+Math.PI*2
+)
+
+ctx.fill()
+
+}
+
+function drawSnake(){
+
+if(snake.cells.length < 2) return
+
+let gradient = ctx.createLinearGradient(0,0,canvas.width,0)
+
+gradient.addColorStop(0,"#14b8a6")
+gradient.addColorStop(1,"#2dd4bf")
+
+ctx.strokeStyle = gradient
+ctx.lineWidth = grid
+ctx.lineJoin = "round"
+ctx.lineCap = "round"
+
+ctx.beginPath()
+
+snake.cells.forEach((cell,index)=>{
+
+let x = cell.x + grid/2
+let y = cell.y + grid/2
+
+if(index === 0){
+ctx.moveTo(x,y)
+}else{
+ctx.lineTo(x,y)
+}
+
+})
+
+ctx.stroke()
+
+drawHead()
+
+}
+
+function drawHead(){
+
+let head = snake.cells[0]
+
+let hx = head.x + grid/2
+let hy = head.y + grid/2
+
+ctx.fillStyle="#2dd4bf"
+
+ctx.beginPath()
+ctx.arc(hx,hy,grid/1.8,0,Math.PI*2)
+ctx.fill()
+
 ctx.fillStyle="white"
-ctx.font="20px Arial"
-ctx.fillText("Score: "+score,10,25)
+
+ctx.beginPath()
+ctx.arc(hx-5,hy-5,3,0,Math.PI*2)
+ctx.fill()
+
+ctx.beginPath()
+ctx.arc(hx+5,hy-5,3,0,Math.PI*2)
+ctx.fill()
+
+ctx.fillStyle="black"
+
+ctx.beginPath()
+ctx.arc(hx-5,hy-5,1.5,0,Math.PI*2)
+ctx.fill()
+
+ctx.beginPath()
+ctx.arc(hx+5,hy-5,1.5,0,Math.PI*2)
+ctx.fill()
+
+ctx.strokeStyle="black"
+ctx.lineWidth=2
+
+ctx.beginPath()
+ctx.arc(hx,hy+4,6,0,Math.PI)
+ctx.stroke()
+
 }
 
 function gameLoop(){
 
 requestAnimationFrame(gameLoop)
-
-if(gameOver) return
 
 if(++count < 4) return
 
@@ -106,11 +182,8 @@ snake.x >= canvas.width ||
 snake.y < 0 ||
 snake.y >= canvas.height
 ){
-gameOver = true
-setTimeout(()=>{
-alert("Fim de jogo! Pontos: "+score)
+alert("Acabosse oque era doce! Pontos: "+score)
 location.reload()
-},100)
 }
 
 snake.cells.unshift({x:snake.x,y:snake.y})
@@ -119,16 +192,9 @@ if(snake.cells.length > snake.maxCells){
 snake.cells.pop()
 }
 
-ctx.fillStyle="#ef4444"
-ctx.fillRect(apple.x,apple.y,grid-1,grid-1)
+drawApple()
 
-ctx.fillStyle="#22c55e"
-
-snake.cells.forEach(function(cell,index){
-
-ctx.fillRect(cell.x,cell.y,grid-1,grid-1)
-
-if(cell.x === apple.x && cell.y === apple.y){
+if(snake.x === apple.x && snake.y === apple.y){
 
 snake.maxCells++
 score++
@@ -138,24 +204,7 @@ apple.y = random(0,canvas.height/grid)*grid
 
 }
 
-for(let i=index+1;i<snake.cells.length;i++){
-
-if(cell.x === snake.cells[i].x && cell.y === snake.cells[i].y){
-
-gameOver = true 
-
-setTimeout(()=>{
-alert("Fim de jogo! Pontos: "+score)
-location.reload()
-},100)
-
-}
-
-}
-
-})
-
-drawScore()
+drawSnake()
 
 }
 
@@ -166,7 +215,7 @@ snake.dx = -grid
 snake.dy = 0
 }
 
-else if(e.key ===  "ArrowUp" && snake.dy === 0){
+else if(e.key === "ArrowUp" && snake.dy === 0){
 snake.dy = -grid
 snake.dx = 0
 }
@@ -180,23 +229,26 @@ else if(e.key === "ArrowDown" && snake.dy === 0){
 snake.dy = grid
 snake.dx = 0
 }
+
 })
 
-let touchStartX = 0
-let touchStartY = 0
+let startX = 0
+let startY = 0
 
 canvas.addEventListener("touchstart",function(e){
-touchStartX = e.touches[0].clientX
-touchStartY = e.touches[0].clientY
+
+startX = e.touches[0].clientX
+startY = e.touches[0].clientY
+
 })
 
 canvas.addEventListener("touchend",function(e){
 
-let touchEndX = e.changedTouches[0].clientX
-let touchEndY = e.changedTouches[0].clientY
+let endX = e.changedTouches[0].clientX
+let endY = e.changedTouches[0].clientY
 
-let dx = touchEndX - touchStartX
-let dy = touchEndY - touchStartY
+let dx = endX - startX
+let dy = endY - startY
 
 if(Math.abs(dx) > Math.abs(dy)){
 
