@@ -3,27 +3,26 @@
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Cobrona Games Pro</title>
+<title>Cobrona Games</title>
 
 <style>
 
 body{
 margin:0;
-background:#020617;
+background:linear-gradient(#020617,#020617,#020617,#021425);
 display:flex;
-flex-direction:column;
-align-items:center;
 justify-content:center;
+align-items:center;
 height:100vh;
 font-family:Arial;
 color:white;
+overflow:hidden;
 }
 
-h1{
-color:#22c55e;
+#gameContainer{
+position:relative;
 }
 
 canvas{
@@ -32,15 +31,59 @@ border:4px solid #22c55e;
 box-shadow:0 0 25px #22c55e;
 }
 
+.menu{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.7);
+}
+
+button{
+padding:15px 40px;
+font-size:20px;
+border:none;
+border-radius:10px;
+background:#22c55e;
+color:white;
+cursor:pointer;
+box-shadow:0 0 10px #22c55e;
+}
+
+button:hover{
+transform:scale(1.05);
+}
+
+h1{
+margin-bottom:20px;
+}
+
 </style>
 
 </head>
 
 <body>
 
-<h1>🐍 Cobrona Games Pro</h1>
+<div id="gameContainer">
 
 <canvas id="game" width="600" height="600"></canvas>
+
+<div id="startMenu" class="menu">
+<h1>🐍 Cobrona Games</h1>
+<button onclick="startGame()">Jogar</button>
+</div>
+
+<div id="gameOverMenu" class="menu" style="display:none">
+<h1 id="gameOverText"></h1>
+<button onclick="startGame()">Reiniciar</button>
+</div>
+
+</div>
 
 <script>
 
@@ -50,8 +93,17 @@ const ctx = canvas.getContext("2d")
 const grid = 20
 let count = 0
 let score = 0
+let running = false
 
-let snake = {
+let snake
+let apple
+
+function startGame(){
+
+document.getElementById("startMenu").style.display="none"
+document.getElementById("gameOverMenu").style.display="none"
+
+snake={
 x:300,
 y:300,
 dx:grid,
@@ -60,9 +112,25 @@ cells:[],
 maxCells:6
 }
 
-let apple = {
+apple={
 x:200,
 y:200
+}
+
+score=0
+running=true
+
+}
+
+function gameOver(){
+
+running=false
+
+document.getElementById("gameOverText").innerText=
+"Acabosse oque era doce! Pontos: "+score
+
+document.getElementById("gameOverMenu").style.display="flex"
+
 }
 
 function random(min,max){
@@ -71,17 +139,19 @@ return Math.floor(Math.random()*(max-min))+min
 
 function drawApple(){
 
+let pulse = Math.sin(Date.now()/200)*2
+
 ctx.beginPath()
-ctx.fillStyle="red"
 
 ctx.arc(
 apple.x + grid/2,
 apple.y + grid/2,
-grid/2.3,
+grid/2.3 + pulse,
 0,
 Math.PI*2
 )
 
+ctx.fillStyle="red"
 ctx.fill()
 
 }
@@ -154,22 +224,16 @@ ctx.beginPath()
 ctx.arc(hx+5,hy-5,1.5,0,Math.PI*2)
 ctx.fill()
 
-ctx.strokeStyle="black"
-ctx.lineWidth=2
-
-ctx.beginPath()
-ctx.arc(hx,hy+4,6,0,Math.PI)
-ctx.stroke()
-
 }
 
 function gameLoop(){
 
 requestAnimationFrame(gameLoop)
 
-if(++count < 4) return
+if(!running) return
 
-count = 0
+if(++count < 4) return
+count=0
 
 ctx.clearRect(0,0,canvas.width,canvas.height)
 
@@ -182,8 +246,8 @@ snake.x >= canvas.width ||
 snake.y < 0 ||
 snake.y >= canvas.height
 ){
-alert("Acabosse oque era doce! Pontos: "+score)
-location.reload()
+gameOver()
+return
 }
 
 snake.cells.unshift({x:snake.x,y:snake.y})
@@ -210,6 +274,8 @@ drawSnake()
 
 document.addEventListener("keydown",function(e){
 
+if(!running) return
+
 if(e.key === "ArrowLeft" && snake.dx === 0){
 snake.dx = -grid
 snake.dy = 0
@@ -232,46 +298,46 @@ snake.dx = 0
 
 })
 
-let startX = 0
-let startY = 0
+let startX=0
+let startY=0
 
-canvas.addEventListener("touchstart",function(e){
-
-startX = e.touches[0].clientX
-startY = e.touches[0].clientY
-
+canvas.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX
+startY=e.touches[0].clientY
 })
 
-canvas.addEventListener("touchend",function(e){
+canvas.addEventListener("touchend",e=>{
 
-let endX = e.changedTouches[0].clientX
-let endY = e.changedTouches[0].clientY
+if(!running) return
 
-let dx = endX - startX
-let dy = endY - startY
+let endX=e.changedTouches[0].clientX
+let endY=e.changedTouches[0].clientY
 
-if(Math.abs(dx) > Math.abs(dy)){
+let dx=endX-startX
+let dy=endY-startY
 
-if(dx > 0 && snake.dx === 0){
-snake.dx = grid
-snake.dy = 0
+if(Math.abs(dx)>Math.abs(dy)){
+
+if(dx>0 && snake.dx===0){
+snake.dx=grid
+snake.dy=0
 }
 
-else if(dx < 0 && snake.dx === 0){
-snake.dx = -grid
-snake.dy = 0
+else if(dx<0 && snake.dx===0){
+snake.dx=-grid
+snake.dy=0
 }
 
 }else{
 
-if(dy > 0 && snake.dy === 0){
-snake.dy = grid
-snake.dx = 0
+if(dy>0 && snake.dy===0){
+snake.dy=grid
+snake.dx=0
 }
 
-else if(dy < 0 && snake.dy === 0){
-snake.dy = -grid
-snake.dx = 0
+else if(dy<0 && snake.dy===0){
+snake.dy=-grid
+snake.dx=0
 }
 
 }
